@@ -65,6 +65,10 @@ int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c) {
     int encontrado_enemigo;
     int posible;
     
+    if(tablero[f][c]) { //Ya existe una ficha en ese posición
+        return 0;
+    }
+    
     for(d = 0; d < 8; ++d) {
         encontrado_enemigo = 0;
         posible = 0;
