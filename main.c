@@ -13,6 +13,7 @@ void imprimir(Ficha tablero[8][8]);
 int dentro(int x, int y);
 int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c);
 int comprobar_todos_movimientos(Ficha tablero[8][8], Ficha jugador);
+int contar_fichas(Ficha tablero[8][8], Ficha jugador);
 Ficha fin(Ficha tablero[8][8]);
 int colocar(Ficha tablero[8][8], Ficha jugador, int f, int c);
 
@@ -70,10 +71,10 @@ int main() {
     
     switch(estado) {
         case FICHA_NEGRA:
-            printf("Ganan las negras\n");
+            printf("Ganan las negras por %i a %i\n", contar_fichas(tablero, FICHA_NEGRA), contar_fichas(tablero, FICHA_BLANCA));
             break;
         case FICHA_BLANCA:
-            printf("Ganan las blancas\n");
+            printf("Ganan las blancas por %i a %i\n", contar_fichas(tablero, FICHA_BLANCA), contar_fichas(tablero, FICHA_NEGRA));
             break;
         default:
             printf("Empate\n");
@@ -96,14 +97,19 @@ void inicializar(Ficha tablero[8][8]) {
 void imprimir(Ficha tablero[8][8]) {
     int x, y;
     
-    printf(" ABCDEFGH\n");
+    printf("/ ABCDEFGH \\\n");
     for(x = 0; x < 8; ++x) {
-        printf("%i", x+1);
+        printf("%-2i", x+1);
         for(y = 0; y < 8; ++y) {
             printf("%c", simbolo[tablero[x][y]]);
         }
+        printf("%2i", x+1);
         printf("\n");
     }
+    printf("\\ ABCDEFGH /\n");
+    
+    printf("N: %i, B: %i\n", contar_fichas(tablero, FICHA_NEGRA), contar_fichas(tablero, FICHA_BLANCA));
+    
 }
 
 int dentro(int x, int y) {
@@ -185,23 +191,24 @@ int comprobar_todos_movimientos(Ficha tablero[8][8], Ficha jugador) {
     return 0;
 }
 
-Ficha fin(Ficha tablero[8][8]) {
-    if(!comprobar_todos_movimientos(tablero, FICHA_BLANCA) && !comprobar_todos_movimientos(tablero, FICHA_NEGRA)) {
-        int blancas = 0, negras = 0;
-        int f, c;
-        
-        for(f = 0; f < 8; ++f) {
-            for(c = 0; c < 8; ++c) {
-                switch(tablero[f][c]) {
-                    case FICHA_BLANCA:
-                        ++blancas;
-                        break;
-                    case FICHA_NEGRA:
-                        ++negras;
-                        break;
-                }
+int contar_fichas(Ficha tablero[8][8], Ficha jugador) {
+    int cant = 0;
+    int f, c;
+    
+    for(f = 0; f < 8; ++f) {
+        for(c = 0; c < 8; ++c) {
+            if(tablero[f][c] == jugador) {
+                ++cant;
             }
         }
+    }
+    return cant;
+}
+
+Ficha fin(Ficha tablero[8][8]) {
+    if(!comprobar_todos_movimientos(tablero, FICHA_BLANCA) && !comprobar_todos_movimientos(tablero, FICHA_NEGRA)) {
+        int blancas = contar_fichas(tablero, FICHA_BLANCA),
+            negras = contar_fichas(tablero, FICHA_NEGRA);
         
         if(negras > blancas) {
             return FICHA_NEGRA;
