@@ -145,13 +145,13 @@ void board_print(Board_t *board) {
         printf("%2c", c);
     }
     
-    printf(" \\\n");
+    printf("  \\\n");
     for(x = 0; x < board->rows; ++x) {
         printf("%-2i", x+1);
         for(y = 0; y < board->cols; ++y) {
             printf("%2c", symbol[board->b[x][y]]);
         }
-        printf("%2i", x+1);
+        printf("%3i", x+1);
         printf("\n");
     }
     printf("\\ ");
@@ -160,7 +160,7 @@ void board_print(Board_t *board) {
         printf("%2c", c);
     }
     
-    printf(" /\n");
+    printf("  /\n");
     
     printf("Black: %i, White: %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
     
