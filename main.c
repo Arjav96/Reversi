@@ -142,14 +142,14 @@ void board_print(Board_t *board) {
     printf("/ ");
     
     for(y = 0, c = 'A'; y < board->cols; ++y, ++c) {
-        printf("%c", c);
+        printf("%2c", c);
     }
     
     printf(" \\\n");
     for(x = 0; x < board->rows; ++x) {
         printf("%-2i", x+1);
         for(y = 0; y < board->cols; ++y) {
-            printf("%c", symbol[board->b[x][y]]);
+            printf("%2c", symbol[board->b[x][y]]);
         }
         printf("%2i", x+1);
         printf("\n");
@@ -157,7 +157,7 @@ void board_print(Board_t *board) {
     printf("\\ ");
     
     for(y = 0, c = 'A'; y < board->cols; ++y, ++c) {
-        printf("%c", c);
+        printf("%2c", c);
     }
     
     printf(" /\n");
