@@ -1,123 +1,174 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum {
-    FICHA_VACIO = 0,
-    FICHA_NEGRA,
-    FICHA_BLANCA,
-    FICHA_NULA
-} Ficha;
+    DOMINO_VOID = 0,
+    DOMINO_BLACK,
+    DOMINO_WHITE,
+    DOMINO_BOTH
+} Domino_t;
 
-const char simbolo[3] = {'.', 'X', 'O'};
+const char symbol[3] = {'.', 'X', 'O'};
 
-void inicializar(Ficha tablero[8][8]);
-void imprimir(Ficha tablero[8][8]);
-int dentro(int x, int y);
-int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c);
-int comprobar_todos_movimientos(Ficha tablero[8][8], Ficha jugador);
-int contar_fichas(Ficha tablero[8][8], Ficha jugador);
-Ficha fin(Ficha tablero[8][8]);
-int colocar(Ficha tablero[8][8], Ficha jugador, int f, int c);
+typedef struct {
+    int rows;
+    int cols;
+    Domino_t **b;
+} Board_t;
+
+Board_t* board_new(int rows, int cols);
+void board_free(Board_t* board);
+void board_print(Board_t *board);
+int board_inside(Board_t *board, int r, int c);
+int board_check_movement(Board_t *board, Domino_t jugador, int r, int c);
+int board_check_all_movements(Board_t *board, Domino_t jugador);
+int board_count_dominoes(Board_t *board, Domino_t jugador);
+Domino_t board_check_end(Board_t *board);
+int board_place(Board_t *board, Domino_t jugador, int r, int c);
 
 int main() {
-    Ficha tablero[8][8];
+    Board_t *board;
     
     printf("Reversi\n");
-    inicializar(tablero);
+    board = board_new(8, 8);
     
-    Ficha estado;
-    Ficha turno = FICHA_BLANCA;
-    int f, c;
-    char cf, cc;
-    for(estado = fin(tablero); !estado; estado = fin(tablero)) {
-        imprimir(tablero);
-        if(turno == FICHA_BLANCA) {
+    Domino_t estado;
+    Domino_t turno = DOMINO_WHITE;
+    int r, c;
+    char cc;
+    for(estado = board_check_end(board); !estado; estado = board_check_end(board)) {
+        board_print(board);
+        if(turno == DOMINO_WHITE) {
             printf("Es el turno de las blancas\n");
         } else {
             printf("Es el turno de las negras\n");
         }
         
-        if(comprobar_todos_movimientos(tablero, turno)) {
+        if(board_check_all_movements(board, turno)) {
             printf("Movimientos posibles: ");
-            for(f = 0; f < 8; ++f) {
-                for(c = 0; c < 8; ++c) {
-                    if(comprobar_movimiento(tablero, turno, f, c)) {
-                        printf("%c%c ", '1'+((char)f), 'A'+((char)c));
+            for(r = 0; r < board->rows; ++r) {
+                for(c = 0; c < board->cols; ++c) {
+                    if(board_check_movement(board, turno, r, c)) {
+                        printf("%i%c ", r+1, 'A'+((char)c));
                     }
                 }
             }
             printf("\n");
             
-            cf = '\0';
+            r = -1;
             do {
-                if(cf != '\0') {
-                    printf("No se puede poner en %c%c\n", cf, cc);
+                if(r != -1) {
+                    printf("No se puede poner en %i%c\n", r, cc);
                 }
                 printf("Elija movimiento: ");
-                scanf("%c%c", &cf, &cc);
+                scanf("%i%c", &r, &cc);
                 getchar();
 
-                f = (int)(cf-'1');
                 c = (int)(cc-'A');
-            } while(!colocar(tablero, turno, f, c));
+            } while(!board_place(board, turno, r-1, c));
         } else {
             printf("No hay movimientos posibles. Pierde turno\n");
         }
         
-        if(turno == FICHA_BLANCA) {
-            turno = FICHA_NEGRA;
+        if(turno == DOMINO_WHITE) {
+            turno = DOMINO_BLACK;
         } else {
-            turno = FICHA_BLANCA;
+            turno = DOMINO_WHITE;
         }
     }
     
     switch(estado) {
-        case FICHA_NEGRA:
-            printf("Ganan las negras por %i a %i\n", contar_fichas(tablero, FICHA_NEGRA), contar_fichas(tablero, FICHA_BLANCA));
+        case DOMINO_BLACK:
+            printf("Ganan las negras por %i a %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
             break;
-        case FICHA_BLANCA:
-            printf("Ganan las blancas por %i a %i\n", contar_fichas(tablero, FICHA_BLANCA), contar_fichas(tablero, FICHA_NEGRA));
+        case DOMINO_WHITE:
+            printf("Ganan las blancas por %i a %i\n", board_count_dominoes(board, DOMINO_WHITE), board_count_dominoes(board, DOMINO_BLACK));
             break;
         default:
             printf("Empate\n");
     }
+    
+    board_free(board);
+            
+    return 0;
 }
 
-void inicializar(Ficha tablero[8][8]) {
+Board_t* board_new(int rows, int cols) {
+    void* mem = malloc(
+    sizeof(Board_t)+
+    rows*sizeof(Domino_t*)+
+    rows*cols*sizeof(Domino_t)
+    );
+    
+    Board_t* ret = (Board_t*)mem;
+    ret->rows = rows;
+    ret->cols = cols;
+    ret->b = (Domino_t**)(ret+1);
+    
+    int r;
+    Domino_t* p = ((Domino_t*)(ret+1))+rows;
+    for(r = 0; r < rows; ++r) {
+        ret->b[r] = (Domino_t*)p;
+        p = p + cols;
+    }
+    
     int x, y;
     
-    for(x = 0; x < 8; ++x) {
-        for(y = 0; y < 8; ++y) {
-            tablero[x][y] = FICHA_VACIO;
+    for(x = 0; x < ret->rows; ++x) {
+        for(y = 0; y < ret->cols; ++y) {
+            ret->b[x][y] = DOMINO_VOID;
         }
     }
     
-    tablero[3][3] = tablero[4][4] = FICHA_BLANCA;
-    tablero[3][4] = tablero[4][3] = FICHA_NEGRA;
+    int rm = rows/2,
+        cm = cols/2;
+    
+    ret->b[rm-1][cm-1] = ret->b[rm][cm] = DOMINO_WHITE;
+    ret->b[rm-1][cm] = ret->b[rm][cm-1] = DOMINO_BLACK;
+    
+    return ret;
 }
 
-void imprimir(Ficha tablero[8][8]) {
+void board_free(Board_t* board) {
+    free(board);
+}
+
+void board_print(Board_t *board) {
     int x, y;
+    char c;
     
-    printf("/ ABCDEFGH \\\n");
-    for(x = 0; x < 8; ++x) {
+    printf("/ ");
+    
+    for(y = 0, c = 'A'; y < board->cols; ++y, ++c) {
+        printf("%c", c);
+    }
+    
+    printf(" \\\n");
+    for(x = 0; x < board->rows; ++x) {
         printf("%-2i", x+1);
-        for(y = 0; y < 8; ++y) {
-            printf("%c", simbolo[tablero[x][y]]);
+        for(y = 0; y < board->cols; ++y) {
+            printf("%c", symbol[board->b[x][y]]);
         }
         printf("%2i", x+1);
         printf("\n");
     }
-    printf("\\ ABCDEFGH /\n");
+    printf("\\ ");
     
-    printf("N: %i, B: %i\n", contar_fichas(tablero, FICHA_NEGRA), contar_fichas(tablero, FICHA_BLANCA));
+    for(y = 0, c = 'A'; y < board->cols; ++y, ++c) {
+        printf("%c", c);
+    }
+    
+    printf(" /\n");
+    
+    printf("N: %i, B: %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
     
 }
 
-int dentro(int x, int y) {
-    return x >= 0 && x < 8 && y >= 0 && y < 8;
+int board_inside(Board_t *board, int r, int c) {
+    return r >= 0 && r < board->rows && c >= 0 && c < board->cols;
 }
 
-int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c) {
+int board_check_movement(Board_t *board, Domino_t jugador, int r, int c) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -133,34 +184,34 @@ int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c) {
     int encontrado_enemigo;
     int posible;
     
-    if(!dentro(f, c) || tablero[f][c]) { //Ya existe una ficha en ese posición
+    if(!board_inside(board, r, c) || board->b[r][c]) { //Ya existe una ficha en ese posición
         return 0;
     }
     
     for(d = 0; d < 8; ++d) {
         encontrado_enemigo = 0;
         posible = 0;
-        x = f;
+        x = r;
         y = c;
         
         for(;;) { //bucle-avanzar
             x += dir[d][0];
             y += dir[d][1];
             
-            if(dentro(x, y)) {
+            if(board_inside(board, x, y)) {
                 if(encontrado_enemigo) {
-                    if(tablero[x][y] == FICHA_VACIO) {
+                    if(board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
-                    } else if(tablero[x][y] == jugador) {
+                    } else if(board->b[x][y] == jugador) {
                         posible = 1;
                         break;
                     }
                 } else {
-                    if(tablero[x][y] == jugador || tablero[x][y] == FICHA_VACIO) {
+                    if(board->b[x][y] == jugador || board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
-                    } else { //Ficha enemiga
+                    } else { //Domino_t enemiga
                         encontrado_enemigo = 1;
                     }
                 }
@@ -178,12 +229,12 @@ int comprobar_movimiento(Ficha tablero[8][8], Ficha jugador, int f, int c) {
     return 0;
 }
 
-int comprobar_todos_movimientos(Ficha tablero[8][8], Ficha jugador) {
-    int f, c;
+int board_check_all_movements(Board_t *board, Domino_t jugador) {
+    int r, c;
     
-    for(f = 0; f < 8; ++f) {
-        for(c = 0; c < 8; ++c) {
-            if(comprobar_movimiento(tablero, jugador, f, c)) {
+    for(r = 0; r < board->rows; ++r) {
+        for(c = 0; c < board->cols; ++c) {
+            if(board_check_movement(board, jugador, r, c)) {
                 return 1;
             }
         }
@@ -192,13 +243,13 @@ int comprobar_todos_movimientos(Ficha tablero[8][8], Ficha jugador) {
     return 0;
 }
 
-int contar_fichas(Ficha tablero[8][8], Ficha jugador) {
+int board_count_dominoes(Board_t *board, Domino_t jugador) {
     int cant = 0;
-    int f, c;
+    int r, c;
     
-    for(f = 0; f < 8; ++f) {
-        for(c = 0; c < 8; ++c) {
-            if(tablero[f][c] == jugador) {
+    for(r = 0; r < board->rows; ++r) {
+        for(c = 0; c < board->cols; ++c) {
+            if(board->b[r][c] == jugador) {
                 ++cant;
             }
         }
@@ -206,24 +257,24 @@ int contar_fichas(Ficha tablero[8][8], Ficha jugador) {
     return cant;
 }
 
-Ficha fin(Ficha tablero[8][8]) {
-    if(!comprobar_todos_movimientos(tablero, FICHA_BLANCA) && !comprobar_todos_movimientos(tablero, FICHA_NEGRA)) {
-        int blancas = contar_fichas(tablero, FICHA_BLANCA),
-            negras = contar_fichas(tablero, FICHA_NEGRA);
+Domino_t board_check_end(Board_t *board) {
+    if(!board_check_all_movements(board, DOMINO_WHITE) && !board_check_all_movements(board, DOMINO_BLACK)) {
+        int blancas = board_count_dominoes(board, DOMINO_WHITE),
+            negras = board_count_dominoes(board, DOMINO_BLACK);
         
         if(negras > blancas) {
-            return FICHA_NEGRA;
+            return DOMINO_BLACK;
         } else if(blancas > negras) {
-            return FICHA_BLANCA; 
+            return DOMINO_WHITE; 
         } else {
-            return FICHA_NULA; //Empate
+            return DOMINO_BOTH; //Empate
         }
     } else {
-        return FICHA_VACIO;//0, false
+        return DOMINO_VOID;//0, false
     }
 }
 
-int colocar(Ficha tablero[8][8], Ficha jugador, int f, int c) {
+int board_place(Board_t *board, Domino_t jugador, int r, int c) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -239,41 +290,41 @@ int colocar(Ficha tablero[8][8], Ficha jugador, int f, int c) {
     int encontrado_enemigo;
     int posible;
     
-    if(!dentro(f, c) || tablero[f][c]) { //Ya existe una ficha en ese posición
+    if(!board_inside(board, r, c) || board->b[r][c]) { //Ya existe una ficha en ese posición
         return 0;
     }
     
     for(d = 0; d < 8; ++d) {
         encontrado_enemigo = 0;
         posible = posible || 0;
-        x = f;
+        x = r;
         y = c;
         
         for(;;) { //bucle-avanzar
             x += dir[d][0];
             y += dir[d][1];
             
-            if(dentro(x, y)) {
+            if(board_inside(board, x, y)) {
                 if(encontrado_enemigo) {
-                    if(tablero[x][y] == FICHA_VACIO) {
+                    if(board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
-                    } else if(tablero[x][y] == jugador) {
+                    } else if(board->b[x][y] == jugador) {
                         posible = 1;
                         
                         do {
                             x -= dir[d][0];
                             y -= dir[d][1];
-                            tablero[x][y] = jugador;
-                        } while(!(x==f && y==c));
+                            board->b[x][y] = jugador;
+                        } while(!(x==r && y==c));
                         
                         break;
                     }
                 } else {
-                    if(tablero[x][y] == jugador || tablero[x][y] == FICHA_VACIO) {
+                    if(board->b[x][y] == jugador || board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
-                    } else { //Ficha enemiga
+                    } else { //Domino_t enemiga
                         encontrado_enemigo = 1;
                     }
                 }
