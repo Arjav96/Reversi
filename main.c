@@ -20,35 +20,35 @@ Board_t* board_new(int rows, int cols);
 void board_free(Board_t* board);
 void board_print(Board_t *board);
 int board_inside(Board_t *board, int r, int c);
-int board_check_movement(Board_t *board, Domino_t jugador, int r, int c);
-int board_check_all_movements(Board_t *board, Domino_t jugador);
-int board_count_dominoes(Board_t *board, Domino_t jugador);
+int board_check_movement(Board_t *board, Domino_t player, int r, int c);
+int board_check_all_movements(Board_t *board, Domino_t player);
+int board_count_dominoes(Board_t *board, Domino_t player);
 Domino_t board_check_end(Board_t *board);
-int board_place(Board_t *board, Domino_t jugador, int r, int c);
+int board_place(Board_t *board, Domino_t player, int r, int c);
 
 int main() {
     Board_t *board;
     
-    printf("Reversi\n");
+    printf("+++++++\nReversi\n+++++++\n\n");
     board = board_new(8, 8);
     
-    Domino_t estado;
-    Domino_t turno = DOMINO_WHITE;
+    Domino_t state;
+    Domino_t turn = DOMINO_WHITE;
     int r, c;
     char cc;
-    for(estado = board_check_end(board); !estado; estado = board_check_end(board)) {
+    for(state = board_check_end(board); !state; state = board_check_end(board)) {
         board_print(board);
-        if(turno == DOMINO_WHITE) {
-            printf("Es el turno de las blancas\n");
+        if(turn == DOMINO_WHITE) {
+            printf("White O turn\n");
         } else {
-            printf("Es el turno de las negras\n");
+            printf("Black X turn\n");
         }
         
-        if(board_check_all_movements(board, turno)) {
-            printf("Movimientos posibles: ");
+        if(board_check_all_movements(board, turn)) {
+            printf("Posible movements: ");
             for(r = 0; r < board->rows; ++r) {
                 for(c = 0; c < board->cols; ++c) {
-                    if(board_check_movement(board, turno, r, c)) {
+                    if(board_check_movement(board, turn, r, c)) {
                         printf("%i%c ", r+1, 'A'+((char)c));
                     }
                 }
@@ -58,34 +58,36 @@ int main() {
             r = -1;
             do {
                 if(r != -1) {
-                    printf("No se puede poner en %i%c\n", r, cc);
+                    printf("Can't place on %i%c\n", r, cc);
                 }
-                printf("Elija movimiento: ");
+                printf("Choose position: ");
                 scanf("%i%c", &r, &cc);
                 getchar();
 
                 c = (int)(cc-'A');
-            } while(!board_place(board, turno, r-1, c));
+            } while(!board_place(board, turn, r-1, c));
         } else {
-            printf("No hay movimientos posibles. Pierde turno\n");
+            printf("No movements available. TURN LOST\n");
         }
         
-        if(turno == DOMINO_WHITE) {
-            turno = DOMINO_BLACK;
+        if(turn == DOMINO_WHITE) {
+            turn = DOMINO_BLACK;
         } else {
-            turno = DOMINO_WHITE;
+            turn = DOMINO_WHITE;
         }
     }
     
-    switch(estado) {
+    board_print(board);
+    
+    switch(state) {
         case DOMINO_BLACK:
-            printf("Ganan las negras por %i a %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
+            printf("Black X WIN %i vs %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
             break;
         case DOMINO_WHITE:
-            printf("Ganan las blancas por %i a %i\n", board_count_dominoes(board, DOMINO_WHITE), board_count_dominoes(board, DOMINO_BLACK));
+            printf("White O WIN %i vs %i\n", board_count_dominoes(board, DOMINO_WHITE), board_count_dominoes(board, DOMINO_BLACK));
             break;
         default:
-            printf("Empate\n");
+            printf("STALEMATE\n");
     }
     
     board_free(board);
@@ -160,7 +162,7 @@ void board_print(Board_t *board) {
     
     printf(" /\n");
     
-    printf("N: %i, B: %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
+    printf("Black: %i, White: %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
     
 }
 
@@ -168,7 +170,7 @@ int board_inside(Board_t *board, int r, int c) {
     return r >= 0 && r < board->rows && c >= 0 && c < board->cols;
 }
 
-int board_check_movement(Board_t *board, Domino_t jugador, int r, int c) {
+int board_check_movement(Board_t *board, Domino_t player, int r, int c) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -181,45 +183,45 @@ int board_check_movement(Board_t *board, Domino_t jugador, int r, int c) {
     };
     
     int d, x, y;
-    int encontrado_enemigo;
+    int enemy_found;
     int posible;
     
-    if(!board_inside(board, r, c) || board->b[r][c]) { //Ya existe una ficha en ese posición
+    if(!board_inside(board, r, c) || board->b[r][c]) {
         return 0;
     }
     
     for(d = 0; d < 8; ++d) {
-        encontrado_enemigo = 0;
+        enemy_found = 0;
         posible = 0;
         x = r;
         y = c;
         
-        for(;;) { //bucle-avanzar
+        for(;;) { //go-forward loop
             x += dir[d][0];
             y += dir[d][1];
             
             if(board_inside(board, x, y)) {
-                if(encontrado_enemigo) {
+                if(enemy_found) {
                     if(board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
-                    } else if(board->b[x][y] == jugador) {
+                    } else if(board->b[x][y] == player) {
                         posible = 1;
                         break;
                     }
                 } else {
-                    if(board->b[x][y] == jugador || board->b[x][y] == DOMINO_VOID) {
+                    if(board->b[x][y] == player || board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
-                    } else { //Domino_t enemiga
-                        encontrado_enemigo = 1;
+                    } else {
+                        enemy_found = 1;
                     }
                 }
             } else {
                 posible = 0;
                 break;
             }
-        } //end bucle-avanzar
+        } //end of go-forward loop
         
         if(posible) {
             return 1;
@@ -229,12 +231,12 @@ int board_check_movement(Board_t *board, Domino_t jugador, int r, int c) {
     return 0;
 }
 
-int board_check_all_movements(Board_t *board, Domino_t jugador) {
+int board_check_all_movements(Board_t *board, Domino_t player) {
     int r, c;
     
     for(r = 0; r < board->rows; ++r) {
         for(c = 0; c < board->cols; ++c) {
-            if(board_check_movement(board, jugador, r, c)) {
+            if(board_check_movement(board, player, r, c)) {
                 return 1;
             }
         }
@@ -243,13 +245,13 @@ int board_check_all_movements(Board_t *board, Domino_t jugador) {
     return 0;
 }
 
-int board_count_dominoes(Board_t *board, Domino_t jugador) {
+int board_count_dominoes(Board_t *board, Domino_t player) {
     int cant = 0;
     int r, c;
     
     for(r = 0; r < board->rows; ++r) {
         for(c = 0; c < board->cols; ++c) {
-            if(board->b[r][c] == jugador) {
+            if(board->b[r][c] == player) {
                 ++cant;
             }
         }
@@ -259,12 +261,12 @@ int board_count_dominoes(Board_t *board, Domino_t jugador) {
 
 Domino_t board_check_end(Board_t *board) {
     if(!board_check_all_movements(board, DOMINO_WHITE) && !board_check_all_movements(board, DOMINO_BLACK)) {
-        int blancas = board_count_dominoes(board, DOMINO_WHITE),
-            negras = board_count_dominoes(board, DOMINO_BLACK);
+        int whites = board_count_dominoes(board, DOMINO_WHITE),
+            blacks = board_count_dominoes(board, DOMINO_BLACK);
         
-        if(negras > blancas) {
+        if(blacks > whites) {
             return DOMINO_BLACK;
-        } else if(blancas > negras) {
+        } else if(whites > blacks) {
             return DOMINO_WHITE; 
         } else {
             return DOMINO_BOTH; //Empate
@@ -274,7 +276,7 @@ Domino_t board_check_end(Board_t *board) {
     }
 }
 
-int board_place(Board_t *board, Domino_t jugador, int r, int c) {
+int board_place(Board_t *board, Domino_t player, int r, int c) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -287,7 +289,7 @@ int board_place(Board_t *board, Domino_t jugador, int r, int c) {
     };
     
     int d, x, y;
-    int encontrado_enemigo;
+    int enemy_found;
     int posible;
     
     if(!board_inside(board, r, c) || board->b[r][c]) { //Ya existe una ficha en ese posición
@@ -295,7 +297,7 @@ int board_place(Board_t *board, Domino_t jugador, int r, int c) {
     }
     
     for(d = 0; d < 8; ++d) {
-        encontrado_enemigo = 0;
+        enemy_found = 0;
         posible = posible || 0;
         x = r;
         y = c;
@@ -305,27 +307,27 @@ int board_place(Board_t *board, Domino_t jugador, int r, int c) {
             y += dir[d][1];
             
             if(board_inside(board, x, y)) {
-                if(encontrado_enemigo) {
+                if(enemy_found) {
                     if(board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
-                    } else if(board->b[x][y] == jugador) {
+                    } else if(board->b[x][y] == player) {
                         posible = 1;
                         
                         do {
                             x -= dir[d][0];
                             y -= dir[d][1];
-                            board->b[x][y] = jugador;
+                            board->b[x][y] = player;
                         } while(!(x==r && y==c));
                         
                         break;
                     }
                 } else {
-                    if(board->b[x][y] == jugador || board->b[x][y] == DOMINO_VOID) {
+                    if(board->b[x][y] == player || board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
                     } else { //Domino_t enemiga
-                        encontrado_enemigo = 1;
+                        enemy_found = 1;
                     }
                 }
             } else {
