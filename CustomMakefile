@@ -1,0 +1,19 @@
+CC = gcc
+CFLAGS =
+
+all: reversi
+
+reversi: build/reversi
+
+build/reversi: build_dir build/main.o
+	$(CC) -o build/reversi build/main.o
+
+build/main.o: build_dir main.c
+	$(CC) -c $(CFLAGS) -o build/main.o main.c
+	
+build_dir:
+	mkdir -p build
+
+clean:
+	rm -rf build
+

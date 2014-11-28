@@ -3,7 +3,8 @@
 typedef enum {
     FICHA_VACIO = 0,
     FICHA_NEGRA,
-    FICHA_BLANCA
+    FICHA_BLANCA,
+    FICHA_NULA
 } Ficha;
 
 const char simbolo[3] = {'.', 'X', 'O'};
@@ -215,7 +216,7 @@ Ficha fin(Ficha tablero[8][8]) {
         } else if(blancas > negras) {
             return FICHA_BLANCA; 
         } else {
-            return -1; //Empate
+            return FICHA_NULA; //Empate
         }
     } else {
         return FICHA_VACIO;//0, false
