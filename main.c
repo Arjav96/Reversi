@@ -31,6 +31,9 @@ int main() {
     
     printf("+++++++\nReversi\n+++++++\n\n");
     board = board_new(8, 8);
+    if(board == NULL) {
+        return 1;
+    }
     
     Domino_t state;
     Domino_t turn = DOMINO_WHITE;
@@ -102,22 +105,26 @@ Board_t* board_new(int rows, int cols) {
     rows*cols*sizeof(Domino_t)
     );
     
+    if(!mem) {
+        return NULL;
+    }
+    
     Board_t* ret = (Board_t*)mem;
     ret->rows = rows;
     ret->cols = cols;
     ret->b = (Domino_t**)(ret+1);
     
     int r;
-    Domino_t* p = ((Domino_t*)(ret+1))+rows;
+    Domino_t* p = (Domino_t*)((ret->b)+rows);
     for(r = 0; r < rows; ++r) {
-        ret->b[r] = (Domino_t*)p;
+        ret->b[r] = p;
         p = p + cols;
     }
     
     int x, y;
     
-    for(x = 0; x < ret->rows; ++x) {
-        for(y = 0; y < ret->cols; ++y) {
+    for(x = 0; x < rows; ++x) {
+        for(y = 0; y < cols; ++y) {
             ret->b[x][y] = DOMINO_VOID;
         }
     }
