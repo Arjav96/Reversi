@@ -80,7 +80,7 @@ int board_inside(Board_t *board, int r, int c) {
     return r >= 0 && r < board->rows && c >= 0 && c < board->cols;
 }
 
-int board_check_movement(Board_t *board, Domino_t player, int r, int c) {
+int board_check_movement(Board_t *board, Movement_t move) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -96,15 +96,15 @@ int board_check_movement(Board_t *board, Domino_t player, int r, int c) {
     int enemy_found;
     int posible;
     
-    if(!board_inside(board, r, c) || board->b[r][c]) {
+    if(!board_inside(board, move.r, move.c) || board->b[move.r][move.c]) {
         return 0;
     }
     
     for(d = 0; d < 8; ++d) {
         enemy_found = 0;
         posible = 0;
-        x = r;
-        y = c;
+        x = move.r;
+        y = move.c;
         
         for(;;) { //go-forward loop
             x += dir[d][0];
@@ -115,12 +115,12 @@ int board_check_movement(Board_t *board, Domino_t player, int r, int c) {
                     if(board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
-                    } else if(board->b[x][y] == player) {
+                    } else if(board->b[x][y] == move.player) {
                         posible = 1;
                         break;
                     }
                 } else {
-                    if(board->b[x][y] == player || board->b[x][y] == DOMINO_VOID) {
+                    if(board->b[x][y] == move.player || board->b[x][y] == DOMINO_VOID) {
                         posible = 0;
                         break;
                     } else {
@@ -146,7 +146,7 @@ int board_check_all_movements(Board_t *board, Domino_t player) {
     
     for(r = 0; r < board->rows; ++r) {
         for(c = 0; c < board->cols; ++c) {
-            if(board_check_movement(board, player, r, c)) {
+            if(board_check_movement(board, (Movement_t){player, r, c})) {
                 return 1;
             }
         }
@@ -186,7 +186,7 @@ Domino_t board_check_end(Board_t *board) {
     }
 }
 
-int board_place(Board_t *board, Domino_t player, int r, int c) {
+int board_place(Board_t *board, Movement_t move) {
     const int dir[8][2] = {
         {-1, 0},    //N
         {-1, 1},    //NE
@@ -202,15 +202,15 @@ int board_place(Board_t *board, Domino_t player, int r, int c) {
     int enemy_found;
     int posible;
     
-    if(!board_inside(board, r, c) || board->b[r][c]) { //Ya existe una ficha en ese posición
+    if(!board_inside(board, move.r, move.c) || board->b[move.r][move.c]) { //Ya existe una ficha en ese posición
         return 0;
     }
     
     for(d = 0; d < 8; ++d) {
         enemy_found = 0;
         posible = posible || 0;
-        x = r;
-        y = c;
+        x = move.r;
+        y = move.c;
         
         for(;;) { //bucle-avanzar
             x += dir[d][0];
@@ -221,19 +221,19 @@ int board_place(Board_t *board, Domino_t player, int r, int c) {
                     if(board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
-                    } else if(board->b[x][y] == player) {
+                    } else if(board->b[x][y] == move.player) {
                         posible = 1;
                         
                         do {
                             x -= dir[d][0];
                             y -= dir[d][1];
-                            board->b[x][y] = player;
-                        } while(!(x==r && y==c));
+                            board->b[x][y] = move.player;
+                        } while(!(x==move.r && y==move.c));
                         
                         break;
                     }
                 } else {
-                    if(board->b[x][y] == player || board->b[x][y] == DOMINO_VOID) {
+                    if(board->b[x][y] == move.player || board->b[x][y] == DOMINO_VOID) {
                         posible = posible || 0;
                         break;
                     } else { //Domino_t enemiga

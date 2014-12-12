@@ -26,7 +26,7 @@ int main() {
             printf("Posible movements: ");
             for(r = 0; r < board->rows; ++r) {
                 for(c = 0; c < board->cols; ++c) {
-                    if(board_check_movement(board, turn, r, c)) {
+                    if(board_check_movement(board, (Movement_t){turn, r, c})) {
                         printf("%i%c ", r+1, 'A'+((char)c));
                     }
                 }
@@ -43,7 +43,7 @@ int main() {
                 getchar();
 
                 c = (int)(cc-'A');
-            } while(!board_place(board, turn, r-1, c));
+            } while(!board_place(board, (Movement_t){turn, r-1, c}));
         } else {
             printf("No movements available. TURN LOST\n");
         }
