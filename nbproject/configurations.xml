@@ -20,6 +20,7 @@
                    projectFiles="true">
       <itemPath>board.c</itemPath>
       <itemPath>domino.c</itemPath>
+      <itemPath>game.c</itemPath>
       <itemPath>main.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
@@ -53,6 +54,8 @@
       <item path="domino.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="domino.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="game.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="game.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -92,6 +95,8 @@
       <item path="domino.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="domino.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="game.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="game.h" ex="false" tool="3" flavor2="0">
       </item>
