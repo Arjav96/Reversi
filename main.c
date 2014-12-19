@@ -8,17 +8,19 @@ typedef enum {
 } MenuOption_t;
 
 int main() {
-    Game_t* current_game;
+    Game_t* current_game = NULL;
     MenuOption_t option;
     
+    int playing;
     int rows, cols;
-    char filename[256];
+    FILE* fh;
+    char buffer[256];
     
     Domino_t turn;
     
-    printf("+++++++\nReversi\n+++++++\n\n");
-    
     do {
+        printf("\n\n\n");
+        printf("+++++++\nReversi\n+++++++\n\n");
         printf(
                 "1. New\n"
                 "2. Load from file\n"
@@ -37,148 +39,105 @@ int main() {
                 current_game = game_new(rows, cols);
                 if(current_game == NULL) {
                     printf("Couldn't create game\n");
-                    return 1;
                 }
                 break;
             case LOAD:
-                printf("Test: Reading from stdin\n");
-                current_game = game_from_file(stdin);
-                if(current_game == NULL) {
-                    printf("Couldn't create game\n");
-                    return 1;
+                printf("Introduce filename: ");
+                getchar();
+                fgets(buffer, 255, stdin);
+                
+                buffer[strlen(buffer) - 1] = '\0';
+                
+                fh = fopen(buffer, "r");
+                if(!fh) {
+                    printf("Couldn't open file\n");
+                } else {
+                    current_game = game_from_file(fh);
+                    if(current_game == NULL) {
+                        printf("Couldn't create game\n");
+                    }
+                    fclose(fh);
                 }
                 break;
             case QUIT:
-                return 0;
                 break;
         }
         
-        while(!game_check_end(current_game)) {
-            board_print(current_game->board);
-            
-            turn = game_get_turn(current_game);
-            
-            if(turn == DOMINO_WHITE) {
-                printf("White O turn\n");
-            } else {
-                printf("Black X turn\n");
-            }
-            
-            int r, c;
-            if(board_check_all_movements(current_game->board, turn)) {
-                printf("Posible movements: ");
-                for(r = 0; r < current_game->board->rows; ++r) {
-                    for(c = 0; c < current_game->board->cols; ++c) {
-                        if(board_check_movement(current_game->board, (Movement_t){turn, r, c})) {
-                            printf("%i%c ", r+1, 'A'+((char)c));
+        if(current_game) {
+            playing = 1;
+            while(!game_check_end(current_game) && playing) {
+                board_print(current_game->board);
+
+                turn = game_get_turn(current_game);
+
+                if(turn == DOMINO_WHITE) {
+                    printf("White O turn\n");
+                } else {
+                    printf("Black X turn\n");
+                }
+
+                int r, c;
+                if(board_check_all_movements(current_game->board, turn)) {
+                    printf("Posible movements: ");
+                    for(r = 0; r < current_game->board->rows; ++r) {
+                        for(c = 0; c < current_game->board->cols; ++c) {
+                            if(board_check_movement(current_game->board, (Movement_t){turn, r, c})) {
+                                printf("%i%c ", r+1, 'A'+((char)c));
+                            }
                         }
                     }
+                    printf("\n");
+
+                    char cc;
+                    r = -1;
+                    do {
+                        if(r != -1) {
+                            printf("Can't place on %i%c\n", r, cc);
+                        }
+                        printf("Choose position[Type SAVE for saving and quiting]: ");
+                        scanf("%s", buffer);
+                        
+                        if(strcmp(buffer, "SAVE") == 0) {
+                            printf("Type filename for saving[no spaces allowed]: ");
+                            scanf("%s", buffer);
+                            fh = fopen(buffer, "w");
+                            game_to_file(current_game, fh);
+                            fclose(fh);
+                            playing = 0;
+                            break;
+                        }
+                        
+                        sscanf(buffer, "%i%c", &r, &cc);
+
+                        c = (int)(cc-'A');
+                    } while(!game_place(current_game, (Movement_t){turn, r-1, c}));
+                } else {
+                    printf("No movements available. TURN LOST\n");
+                    game_change_turn(current_game);
                 }
-                printf("\n");
-
-                char cc;
-                r = -1;
-                do {
-                    if(r != -1) {
-                        printf("Can't place on %i%c\n", r, cc);
-                    }
-                    printf("Choose position: ");
-                    scanf("%i%c", &r, &cc);
-                    getchar();
-
-                    c = (int)(cc-'A');
-                } while(!game_place(current_game, (Movement_t){turn, r-1, c}));
-            } else {
-                printf("No movements available. TURN LOST\n");
             }
+
+            board_print(current_game->board);
+
+            game_print_movements(current_game);
+
+            switch(game_check_end(current_game)) {
+                case DOMINO_BLACK:
+                    printf("Black X WIN %i vs %i\n", board_count_dominoes(current_game->board, DOMINO_BLACK), board_count_dominoes(current_game->board, DOMINO_WHITE));
+                    break;
+                case DOMINO_WHITE:
+                    printf("White O WIN %i vs %i\n", board_count_dominoes(current_game->board, DOMINO_WHITE), board_count_dominoes(current_game->board, DOMINO_BLACK));
+                    break;
+                case DOMINO_VOID:
+                    break;
+                default:
+                    printf("STALEMATE\n");
+            }
+        
+            game_free(current_game);
+            current_game = NULL;
         }
-        
-        board_print(current_game->board);
-        
-        game_print_movements(current_game);
-        
-        switch(game_check_end(current_game)) {
-            case DOMINO_BLACK:
-                printf("Black X WIN %i vs %i\n", board_count_dominoes(current_game->board, DOMINO_BLACK), board_count_dominoes(current_game->board, DOMINO_WHITE));
-                break;
-            case DOMINO_WHITE:
-                printf("White O WIN %i vs %i\n", board_count_dominoes(current_game->board, DOMINO_WHITE), board_count_dominoes(current_game->board, DOMINO_BLACK));
-                break;
-            default:
-                printf("STALEMATE\n");
-        }
-        
     } while(option != QUIT);
     
-    game_free(current_game);
-    
     return 0;
-    /*
-    board = board_new(8, 8);
-    if(board == NULL) {
-        return 1;
-    }
-    
-    Domino_t state;
-    Domino_t turn = DOMINO_WHITE;
-    int r, c;
-    char cc;
-    for(state = board_check_end(board); !state; state = board_check_end(board)) {
-        board_print(board);
-        if(turn == DOMINO_WHITE) {
-            printf("White O turn\n");
-        } else {
-            printf("Black X turn\n");
-        }
-        
-        if(board_check_all_movements(board, turn)) {
-            printf("Posible movements: ");
-            for(r = 0; r < board->rows; ++r) {
-                for(c = 0; c < board->cols; ++c) {
-                    if(board_check_movement(board, (Movement_t){turn, r, c})) {
-                        printf("%i%c ", r+1, 'A'+((char)c));
-                    }
-                }
-            }
-            printf("\n");
-            
-            r = -1;
-            do {
-                if(r != -1) {
-                    printf("Can't place on %i%c\n", r, cc);
-                }
-                printf("Choose position: ");
-                scanf("%i%c", &r, &cc);
-                getchar();
-
-                c = (int)(cc-'A');
-            } while(!board_place(board, (Movement_t){turn, r-1, c}));
-        } else {
-            printf("No movements available. TURN LOST\n");
-        }
-        
-        if(turn == DOMINO_WHITE) {
-            turn = DOMINO_BLACK;
-        } else {
-            turn = DOMINO_WHITE;
-        }
-    }
-    
-    board_print(board);
-    
-    switch(state) {
-        case DOMINO_BLACK:
-            printf("Black X WIN %i vs %i\n", board_count_dominoes(board, DOMINO_BLACK), board_count_dominoes(board, DOMINO_WHITE));
-            break;
-        case DOMINO_WHITE:
-            printf("White O WIN %i vs %i\n", board_count_dominoes(board, DOMINO_WHITE), board_count_dominoes(board, DOMINO_BLACK));
-            break;
-        default:
-            printf("STALEMATE\n");
-    }
-    
-    board_free(board);
-            
-    return 0;
-     */
 }
