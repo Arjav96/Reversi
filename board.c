@@ -2,6 +2,10 @@
 #include "board.h"
 
 Board_t* board_new(int rows, int cols) {
+    if(rows < 2 || cols < 2) {
+        return NULL;
+    }
+    
     void* mem = malloc(
     sizeof(Board_t)+
     rows*sizeof(Domino_t*)+

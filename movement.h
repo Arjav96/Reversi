@@ -8,5 +8,7 @@ typedef struct {
    int r, c;
 } Movement_t;
 
+void movement_print(Movement_t move);
+
 #endif	/* MOVEMENT_H */
 

@@ -22,6 +22,7 @@
       <itemPath>domino.c</itemPath>
       <itemPath>game.c</itemPath>
       <itemPath>main.c</itemPath>
+      <itemPath>movement.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -63,6 +64,8 @@
       </item>
       <item path="main.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="movement.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="movement.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
@@ -103,6 +106,8 @@
       <item path="main.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="main.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="movement.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="movement.h" ex="false" tool="3" flavor2="0">
       </item>

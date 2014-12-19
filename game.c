@@ -19,6 +19,11 @@ Game_t* game_from_file(FILE* fh) {
     fscanf(fh, "%i %i %i", &rows, &cols, &moves);
     
     game->board = board_new(rows, cols);
+    
+    if(!game->board) {
+        return NULL;
+    }
+    
     game->move_num = moves;
     game->move_max = moves;
     game->move_arr = (Movement_t*)malloc(sizeof(Movement_t)*moves);
@@ -27,7 +32,7 @@ Game_t* game_from_file(FILE* fh) {
         fscanf(fh, "%i %i %i", &p, &r, &c);
         game->move_arr[m] = (Movement_t){(Domino_t)p, r, c};
         if(!board_place(game->board, game->move_arr[m])) {
-            return 0;
+            return NULL;
         }
     }
     
@@ -50,7 +55,7 @@ void game_to_file(Game_t* game, FILE* fh) {
     }     
 }
 
-int game_place(Game_t *game, Movement_t move) {
+int game_place(Game_t* game, Movement_t move) {
     if(!board_place(game->board, move)) {
         return 0;
     }
@@ -64,4 +69,32 @@ int game_place(Game_t *game, Movement_t move) {
     game->move_num++;
     
     return 1;
+}
+
+Domino_t game_check_end(Game_t* game) {
+    return board_check_end(game->board);
+}
+
+Domino_t game_get_turn(Game_t* game) {
+    Domino_t last;
+    
+    if(game->move_num == 0) {
+        return DOMINO_WHITE;
+    }
+    
+    last = game->move_arr[game->move_num - 1].player;
+    
+    if(last == DOMINO_WHITE) {
+        return DOMINO_BLACK;
+    } else {
+        return DOMINO_WHITE;
+    }
+}
+
+void game_print_movements(Game_t* game) {
+    int m;
+    
+    for(m = 0; m < game->move_num; ++m) {
+        movement_print(game->move_arr[m]);
+    }
 }
