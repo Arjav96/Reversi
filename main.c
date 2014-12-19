@@ -29,7 +29,7 @@ int main() {
         
         do {
             printf("Choose an option: ");
-            scanf("%i", &option);
+            scanf("%i", (int*)&option);
         } while(option < NEW || option > QUIT);
         
         switch(option) {

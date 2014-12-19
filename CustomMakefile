@@ -1,15 +1,27 @@
-CC = gcc
-CFLAGS = -std=c89 -O3
+CC=gcc
+CFLAGS=-std=c89 -O3 -Wall -Wno-unused-result
 
 all: reversi
 
 reversi: build/reversi
 
-build/reversi: build_dir build/main.o
-	$(CC) -o build/reversi build/main.o
+build/reversi: build_dir build/main.o build/board.o build/domino.o build/game.o build/movement.o
+	$(CC) -o build/reversi build/main.o build/board.o build/domino.o build/game.o build/movement.o
 
-build/main.o: build_dir main.c
+build/main.o: build_dir main.c main.h common.h
 	$(CC) -c $(CFLAGS) -o build/main.o main.c
+	
+build/board.o: build_dir board.c board.h common.h
+	$(CC) -c $(CFLAGS) -o build/board.o board.c
+	
+build/domino.o: build_dir domino.c domino.h common.h
+	$(CC) -c $(CFLAGS) -o build/domino.o domino.c
+
+build/game.o: build_dir game.c game.h common.h
+	$(CC) -c $(CFLAGS) -o build/game.o game.c
+
+build/movement.o: build_dir movement.c movement.h common.h
+	$(CC) -c $(CFLAGS) -o build/movement.o movement.c
 	
 build_dir:
 	mkdir -p build

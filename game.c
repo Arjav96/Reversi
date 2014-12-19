@@ -17,7 +17,7 @@ Game_t* game_from_file(FILE* fh) {
     Game_t* game = (Game_t*)malloc(sizeof(Game_t));
     int rows, cols, moves, m, p, r, c;
     
-    fscanf(fh, "%i", &game->turn);
+    fscanf(fh, "%i", (int*)(&game->turn));
     fscanf(fh, "%i %i %i", &rows, &cols, &moves);
     
     game->board = board_new(rows, cols);
